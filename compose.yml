@@ -1,0 +1,35 @@
+services:
+  server:
+    build: .
+    container_name: server
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_URL: postgres://${MAIN_POSTGRES_USER}:${MAIN_POSTGRES_PASSWORD}@postgres:5432/${MAIN_POSTGRES_DB}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:18.4-alpine3.23
+    container_name: main-postgres-db
+    environment:
+      POSTGRES_DB: ${MAIN_POSTGRES_DB}
+      POSTGRES_USER: ${MAIN_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${MAIN_POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${MAIN_POSTGRES_USER} -d ${MAIN_POSTGRES_DB}'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  migrate:
+    build: migrations
+    environment:
+      POSTGRES_URL: postgres://${MAIN_POSTGRES_USER}:${MAIN_POSTGRES_PASSWORD}@postgres:5432/${MAIN_POSTGRES_DB}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy

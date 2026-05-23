@@ -61,36 +61,36 @@ func (uc *UserUC) CreateUser(ctx context.Context, u *domain.User, password strin
 	return nil
 }
 
-func (uc *UserUC) VerifyUser(ctx context.Context, email string, password string) error {
+func (uc *UserUC) VerifyUser(ctx context.Context, email string, password string) (*domain.User, error) {
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return nil, ctx.Err()
 	}
 
 	u, err := uc.userRepo.GetUser(ctx, email)
 	if errors.Is(err, domain.ErrNotFound) {
-		return domain.ErrWrongPassword // не даем проверять на существование пользователя извне
+		return nil, domain.ErrWrongPassword
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	pw := u.Password
 
 	wantHash, err := base64.StdEncoding.DecodeString(pw.HashBase64)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	salt, err := base64.StdEncoding.DecodeString(pw.SaltBase64)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	gotHash := argon2.IDKey([]byte(password), salt, pw.Time, pw.Memory, pw.Threads, pw.KeyLen)
 
 	if subtle.ConstantTimeCompare(wantHash, gotHash) != 1 {
-		return domain.ErrWrongPassword
+		return nil, domain.ErrWrongPassword
 	}
 
-	return nil
+	return u, nil
 }

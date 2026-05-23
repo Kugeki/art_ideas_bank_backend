@@ -69,22 +69,22 @@ func (r *UserRepoPG) CreateUser(ctx context.Context, u *domain.User) error {
 
 func (r *UserRepoPG) GetUser(ctx context.Context, email string) (*domain.User, error) {
 	q := `select p.hash_base64, p.argon2_version, p.argon2_type, 
-       		p.salt_base64, p.argon2_time, p.argon2_memory, p.argon2_threads, p.argon2_keylen 
+       		p.salt_base64, p.argon2_time, p.argon2_memory, p.argon2_threads, p.argon2_keylen, u.id 
 		from users u
 			join passwords p on p.id = u.password_id 
          where u.email = $1`
 
+	u := domain.User{Email: email}
 	p := domain.Password{}
+
 	err := r.db.QueryRow(ctx, q, email).
-		Scan(&p.HashBase64, &p.Argon2Version, &p.Argon2Type, &p.SaltBase64, &p.Time, &p.Memory, &p.Threads, &p.KeyLen)
+		Scan(&p.HashBase64, &p.Argon2Version, &p.Argon2Type,
+			&p.SaltBase64, &p.Time, &p.Memory, &p.Threads, &p.KeyLen, &u.ID)
 	if err != nil {
 		return nil, DomainGetError(err)
 	}
 
-	u := &domain.User{
-		Email:    email,
-		Password: p,
-	}
+	u.Password = p
 
-	return u, nil
+	return &u, nil
 }

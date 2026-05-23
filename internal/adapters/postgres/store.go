@@ -9,9 +9,12 @@ import (
 )
 
 type Store struct {
-	db       *pgxpool.Pool
-	log      *slog.Logger
-	userRepo *UserRepoPG
+	db  *pgxpool.Pool
+	log *slog.Logger
+
+	userRepo  *UserRepoPG
+	imageRepo *ImageRepoPG
+	tagRepo   *TagRepoPG
 }
 
 func NewStore(ctx context.Context, log *slog.Logger, dbURL string) (*Store, error) {
@@ -46,6 +49,20 @@ func (s *Store) UserRepo() *UserRepoPG {
 		s.userRepo = NewUserRepo(s.db, s.log)
 	}
 	return s.userRepo
+}
+
+func (s *Store) ImageRepo() *ImageRepoPG {
+	if s.imageRepo == nil {
+		s.imageRepo = NewImageRepo(s.db, s.log)
+	}
+	return s.imageRepo
+}
+
+func (s *Store) TagRepo() *TagRepoPG {
+	if s.tagRepo == nil {
+		s.tagRepo = NewTagRepo(s.db, s.log)
+	}
+	return s.tagRepo
 }
 
 func connect(ctx context.Context, cfg *pgxpool.Config) (*pgxpool.Pool, error) {

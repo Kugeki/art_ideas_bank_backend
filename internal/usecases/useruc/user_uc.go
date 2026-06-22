@@ -1,14 +1,19 @@
 package useruc
 
 import (
-	"art_ideas_bank_backend/internal/domain"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"github.com/Kugeki/art_ideas_bank_backend/internal/domain"
 	"golang.org/x/crypto/argon2"
 )
+
+type UserRepo interface {
+	CreateUser(ctx context.Context, u *domain.User) error
+	GetUser(ctx context.Context, email string) (*domain.User, error)
+}
 
 type UserUC struct {
 	userRepo UserRepo
@@ -37,7 +42,8 @@ func (uc *UserUC) CreateUser(ctx context.Context, u *domain.User, password strin
 		return err
 	}
 
-	pwHash := argon2.IDKey([]byte(password), salt, DefaultArgon2Time, DefaultArgon2Memory, DefaultArgon2Threads, DefaultArgon2KeyLen)
+	pwHash := argon2.IDKey([]byte(password), salt, DefaultArgon2Time,
+		DefaultArgon2Memory, DefaultArgon2Threads, DefaultArgon2KeyLen)
 
 	pwHashBase64 := base64.StdEncoding.EncodeToString(pwHash)
 	saltBase64 := base64.StdEncoding.EncodeToString(salt)
@@ -68,7 +74,7 @@ func (uc *UserUC) VerifyUser(ctx context.Context, email string, password string)
 
 	u, err := uc.userRepo.GetUser(ctx, email)
 	if errors.Is(err, domain.ErrNotFound) {
-		return nil, domain.ErrWrongPassword
+		return nil, domain.ErrWrongCredentials
 	}
 	if err != nil {
 		return nil, err
@@ -89,7 +95,7 @@ func (uc *UserUC) VerifyUser(ctx context.Context, email string, password string)
 	gotHash := argon2.IDKey([]byte(password), salt, pw.Time, pw.Memory, pw.Threads, pw.KeyLen)
 
 	if subtle.ConstantTimeCompare(wantHash, gotHash) != 1 {
-		return nil, domain.ErrWrongPassword
+		return nil, domain.ErrWrongCredentials
 	}
 
 	return u, nil

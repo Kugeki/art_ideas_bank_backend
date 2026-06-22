@@ -1,7 +1,5 @@
 package domain
 
-import "errors"
-
 type User struct {
 	ID       int
 	Email    string
@@ -28,8 +26,4 @@ const (
 	Argon2dType Argon2Type = iota
 	Argon2iType
 	Argon2idType
-)
-
-var (
-	ErrWrongPassword = errors.New("wrong password")
 )

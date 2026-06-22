@@ -62,7 +62,7 @@ var DefaultTraceLogLevel = tracelog.LogLevelInfo
 func fromSlogLevel(level slog.Level) tracelog.LogLevel {
 	switch level {
 	case slog.LevelDebug:
-		return tracelog.LogLevelDebug
+		return tracelog.LogLevelTrace
 	case slog.LevelInfo:
 		return tracelog.LogLevelInfo
 	case slog.LevelWarn:

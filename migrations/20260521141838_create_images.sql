@@ -1,10 +1,12 @@
 -- +goose Up
-create table images (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    s3_key      TEXT NOT NULL,
-    uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+create table images
+(
+    id          uuid primary key     default gen_random_uuid(),
+    user_id     integer     not null references users (id) on delete cascade ,
+    ext         text        not null,
+    s3_key      text        not null,
+    uploaded_at timestamptz not null default now()
 );
 
 -- +goose Down
-DROP TABLE images;
+drop table images;

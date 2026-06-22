@@ -1,4 +1,4 @@
-.PHONY: run, run-and-attach, stop, remove-dangling, install-goose, generate-migration
+.PHONY: run, run-and-attach, stop, remove-dangling, install-goose, generate-migration, install-swag, generate-swagger
 
 KNOWN_TARGETS = target
 ARGS := $(filter-out $(KNOWN_TARGETS),$(MAKECMDGOALS))
@@ -21,3 +21,10 @@ install-goose:
 generate-migration:
 	chmod +x ./migrations/generate-migration.sh
 	(cd migrations ; ./generate-migration.sh $(name))
+
+install-swag:
+	go install github.com/swaggo/swag/cmd/swag@latest
+
+generate-swagger:
+	swag fmt -d internal/ports/restapi
+	swag init -d internal/ports/restapi -g restapi.go

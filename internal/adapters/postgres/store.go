@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"art_ideas_bank_backend/pkg/slogdiscard"
 	"context"
+	"github.com/Kugeki/art_ideas_bank_backend/pkg/slogdiscard"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
 	"log/slog"

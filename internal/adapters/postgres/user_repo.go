@@ -1,11 +1,9 @@
 package postgres
 
 import (
-	"art_ideas_bank_backend/internal/domain"
-	"art_ideas_bank_backend/pkg/slogdiscard"
 	"context"
-	"errors"
-	"github.com/jackc/pgx/v5"
+	"github.com/Kugeki/art_ideas_bank_backend/internal/domain"
+	"github.com/Kugeki/art_ideas_bank_backend/pkg/slogdiscard"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
@@ -22,7 +20,8 @@ func NewUserRepo(db *pgxpool.Pool, log *slog.Logger) *UserRepoPG {
 
 func (r *UserRepoPG) CreateUser(ctx context.Context, u *domain.User) error {
 	q1 := `insert into passwords
-		(hash_base64, argon2_version, argon2_type, salt_base64, argon2_time, argon2_memory, argon2_threads, argon2_keylen) 
+		(hash_base64, argon2_version, argon2_type, salt_base64, 
+		 argon2_time, argon2_memory, argon2_threads, argon2_keylen) 
 		values($1, $2, $3, $4, $5, $6, $7, $8) returning id`
 
 	q2 := "insert into users(email, password_id) values($1, $2) returning id"
@@ -31,15 +30,7 @@ func (r *UserRepoPG) CreateUser(ctx context.Context, u *domain.User) error {
 	if err != nil {
 		return err
 	}
-	defer func(tx pgx.Tx, ctx context.Context) {
-		if errors.Is(err, pgx.ErrTxClosed) {
-			r.log.Debug("transaction is closed", slog.Any("error", err))
-			return
-		}
-		if err := tx.Rollback(ctx); err != nil {
-			r.log.Error("transaction rollback error", slog.Any("error", err))
-		}
-	}(tx, ctx)
+	defer tx.Rollback(ctx)
 
 	p := u.Password
 

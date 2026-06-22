@@ -10,7 +10,9 @@ create table tags
 );
 
 create unique index idx_tags_user_path on tags (user_id, path);
-create index idx_tags_path_gist on tags using gist (path);
+create index if not exists idx_tags_path_gist on tags using gist (path);
+create index if not exists idx_tags_user_path_text
+    ON tags (user_id, (path::text) text_pattern_ops);
 
 create table image_tags
 (

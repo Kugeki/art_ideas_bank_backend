@@ -48,7 +48,11 @@ func (c *S3Client) Upload(ctx context.Context, key string, body io.Reader, conte
 		Body:        body,
 		ContentType: aws.String(contentType),
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *S3Client) Download(ctx context.Context, key string) (io.ReadCloser, string, error) {
@@ -60,4 +64,15 @@ func (c *S3Client) Download(ctx context.Context, key string) (io.ReadCloser, str
 		return nil, "", err
 	}
 	return result.Body, *result.ContentType, nil
+}
+
+func (c *S3Client) Delete(ctx context.Context, key string) error {
+	_, err := c.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(c.Bucket),
+		Key:    aws.String(fmt.Sprintf("%v/%v", c.Bucket, key)),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

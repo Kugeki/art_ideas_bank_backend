@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"art_ideas_bank_backend/internal/domain"
 	"errors"
+	"github.com/Kugeki/art_ideas_bank_backend/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )

@@ -1,19 +1,17 @@
 package taguc
 
 import (
-	"art_ideas_bank_backend/internal/domain"
 	"context"
+	"github.com/Kugeki/art_ideas_bank_backend/internal/domain"
 )
 
 type TagRepo interface {
 	CreateTag(ctx context.Context, userID int, fullPath string) (*domain.Tag, error)
 	ListByUser(ctx context.Context, userID int) ([]domain.Tag, error)
-	GetTagsForImage(ctx context.Context, userID int, imageID string) ([]domain.Tag, error)
+	GetTagsByPaths(ctx context.Context, userID int, paths []string) ([]domain.Tag, error)
 	DeleteTag(ctx context.Context, userID int, tagID string) error
 	UpdateTag(ctx context.Context, userID int, tagID string, newName string, newParentID *string) (*domain.Tag, error)
-	AddTagsToImage(ctx context.Context, userID int, imageID string, tagIDs []string) error
-	RemoveTagsFromImage(ctx context.Context, userID int, imageID string, tagIDs []string) error
-	SearchImagesByTags(ctx context.Context, userID int, tagIDs []string) ([]domain.Image, error)
+	SuggestTags(ctx context.Context, userID int, prefix string, limit int) ([]domain.Tag, error)
 }
 
 type TagUC struct {
@@ -40,14 +38,6 @@ func (uc *TagUC) UpdateTag(ctx context.Context, userID int, tagID string, newNam
 	return uc.tagRepo.UpdateTag(ctx, userID, tagID, newName, newParentID)
 }
 
-func (uc *TagUC) AddTagsToImage(ctx context.Context, userID int, imageID string, tagIDs []string) error {
-	return uc.tagRepo.AddTagsToImage(ctx, userID, imageID, tagIDs)
-}
-
-func (uc *TagUC) RemoveTagsFromImage(ctx context.Context, userID int, imageID string, tagIDs []string) error {
-	return uc.tagRepo.RemoveTagsFromImage(ctx, userID, imageID, tagIDs)
-}
-
-func (uc *TagUC) SearchImagesByTags(ctx context.Context, userID int, tagIDs []string) ([]domain.Image, error) {
-	return uc.tagRepo.SearchImagesByTags(ctx, userID, tagIDs)
+func (uc *TagUC) SuggestTags(ctx context.Context, userID int, prefix string, limit int) ([]domain.Tag, error) {
+	return uc.tagRepo.SuggestTags(ctx, userID, prefix, limit)
 }

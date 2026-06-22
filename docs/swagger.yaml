@@ -1,0 +1,663 @@
+basePath: /
+definitions:
+  restapi.ErrorResp:
+    properties:
+      error:
+        type: string
+    type: object
+  restimages.AddTagsToImageReq:
+    properties:
+      tag_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  restimages.GetImageResp:
+    properties:
+      extension:
+        type: string
+      id:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/resttags.TagResp'
+        type: array
+      uploaded_at:
+        type: string
+    type: object
+  restimages.GetImagesReq:
+    properties:
+      tag_ids:
+        items:
+          type: string
+        type: array
+      tag_paths:
+        items:
+          type: string
+        type: array
+    type: object
+  restimages.GetImagesResp:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/restimages.ImageResp'
+        type: array
+    type: object
+  restimages.ImageResp:
+    properties:
+      extension:
+        type: string
+      id:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/resttags.TagResp'
+        type: array
+      uploaded_at:
+        type: string
+    type: object
+  restimages.RemoveTagsFromImageReq:
+    properties:
+      tag_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  restimages.UploadImageResp:
+    properties:
+      extension:
+        type: string
+      id:
+        type: string
+      link:
+        type: string
+    type: object
+  resttags.CreateTagReq:
+    properties:
+      path:
+        type: string
+    type: object
+  resttags.CreateTagResp:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  resttags.GetTagsResp:
+    properties:
+      tags:
+        items:
+          $ref: '#/definitions/resttags.TagResp'
+        type: array
+    type: object
+  resttags.SuggestTagsResp:
+    properties:
+      tags:
+        items:
+          $ref: '#/definitions/resttags.TagResp'
+        type: array
+      tags_ids:
+        items:
+          type: string
+        type: array
+      tags_paths:
+        items:
+          type: string
+        type: array
+    type: object
+  resttags.TagResp:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  resttags.UpdateTagReq:
+    properties:
+      name:
+        type: string
+      new_parent_id:
+        type: string
+    type: object
+  resttags.UpdateTagResp:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  restusers.UserLoginReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  restusers.UserLoginResp:
+    properties:
+      token:
+        type: string
+    type: object
+  restusers.UsersCreateReq:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+info:
+  contact: {}
+  description: API для хранения и поиска референсов художников с иерархическими тегами.
+  title: Art Ideas Bank API
+  version: "1.0"
+paths:
+  /api/v1/images:
+    post:
+      description: 'Поддерживает два режима: по UUID тегов (параметр `tag_ids`) и
+        по текстовым путям (параметр `tag_paths`). Оба используют конъюнкцию с учётом
+        иерархии. Если указаны оба, приоритет у tag_paths. Без ввода параметров выдает
+        все изображения.'
+      parameters:
+      - description: Массив UUID тегов или путей тегов (например, ['животные.кошки','пейзаж.горы'])
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/restimages.GetImagesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список изображений
+          schema:
+            $ref: '#/definitions/restimages.GetImagesResp'
+        "400":
+          description: Неверный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Поиск изображений по тегам
+      tags:
+      - images
+  /api/v1/images/{id}:
+    delete:
+      description: Удаляет изображение из хранилища и базы данных. Все связанные теги
+        открепляются.
+      parameters:
+      - description: UUID изображения
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Изображение удалено
+        "400":
+          description: Пустой ID
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Изображение не найдено
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Удалить изображение
+      tags:
+      - images
+    get:
+      description: Возвращает метаданные изображения и массив привязанных тегов.
+      parameters:
+      - description: UUID изображения
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация об изображении
+          schema:
+            $ref: '#/definitions/restimages.GetImageResp'
+        "400":
+          description: Пустой ID
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Изображение не найдено
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Получить информацию об изображении
+      tags:
+      - images
+  /api/v1/images/{id}/tags:
+    delete:
+      consumes:
+      - application/json
+      description: Принимает список UUID тегов и удаляет их связь с изображением.
+      parameters:
+      - description: UUID изображения
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Массив UUID тегов
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/restimages.RemoveTagsFromImageReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Теги удалены
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "403":
+          description: Доступ запрещён
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Удалить теги с изображения
+      tags:
+      - images
+    post:
+      consumes:
+      - application/json
+      description: Принимает список UUID тегов и связывает их с изображением. Теги
+        должны принадлежать текущему пользователю.
+      parameters:
+      - description: UUID изображения
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Массив UUID тегов
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/restimages.AddTagsToImageReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Теги добавлены
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "403":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Добавить теги к изображению
+      tags:
+      - images
+  /api/v1/images/download/{id}:
+    get:
+      description: Возвращает бинарные данные изображения по его ID. Поддерживает
+        cookie-аутентификацию для прямого открытия в браузере.
+      parameters:
+      - description: UUID изображения
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Изображение
+          schema:
+            type: file
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Не найдено
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Скачать изображение
+      tags:
+      - images
+  /api/v1/images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает изображение в хранилище пользователя. Возвращает ID,
+        расширение и прямую ссылку для скачивания.
+      parameters:
+      - description: Файл изображения
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешная загрузка
+          schema:
+            $ref: '#/definitions/restimages.UploadImageResp'
+        "400":
+          description: Отсутствует файл или неверный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Загрузить изображение
+      tags:
+      - images
+  /api/v1/tags:
+    get:
+      description: Возвращает все теги, созданные пользователем, отсортированные по
+        пути.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список тегов
+          schema:
+            $ref: '#/definitions/resttags.GetTagsResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Список тегов пользователя
+      tags:
+      - tags
+    post:
+      consumes:
+      - application/json
+      description: Принимает полный путь тега (например "животные.кошки"). Автоматически
+        создаёт все недостающие родительские узлы.
+      parameters:
+      - description: Полный путь тега
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/resttags.CreateTagReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданный тег
+          schema:
+            $ref: '#/definitions/resttags.CreateTagResp'
+        "400":
+          description: Некорректный запрос (путь не задан)
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "409":
+          description: Тег уже существует
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Создать тег
+      tags:
+      - tags
+  /api/v1/tags/{id}:
+    delete:
+      description: Удаляет тег и всех его потомков, только если ни к одному из них
+        не привязаны изображения.
+      parameters:
+      - description: UUID тега
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Тег удалён
+        "400":
+          description: Пустой ID
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Тег не найден
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "409":
+          description: Тег используется изображениями
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Удалить тег
+      tags:
+      - tags
+    put:
+      consumes:
+      - application/json
+      description: Позволяет переименовать тег (поле `name`) и/или переместить его
+        под другого родителя (`new_parent_id` – UUID родительского тега). Поддерево
+        обновляется рекурсивно.
+      parameters:
+      - description: UUID тега
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новое имя и (опционально) UUID нового родителя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/resttags.UpdateTagReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённый тег
+          schema:
+            $ref: '#/definitions/resttags.UpdateTagResp'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "404":
+          description: Тег не найден
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "409":
+          description: Конфликт (тег с таким путём уже существует или попытка создать
+            цикл)
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Обновить тег
+      tags:
+      - tags
+  /api/v1/tags/suggest:
+    get:
+      description: Возвращает список тегов, путь которых начинается с заданной строки
+        (query-параметр `q`). Можно ограничить количество результатов через `limit`
+        (по умолчанию 20).
+      parameters:
+      - description: Префикс для поиска (например, 'hair.p')
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Максимальное количество результатов (1-100, по умолчанию 20)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Подходящие теги
+          schema:
+            $ref: '#/definitions/resttags.SuggestTagsResp'
+        "400":
+          description: Некорректный limit
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Требуется аутентификация
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      security:
+      - BearerAuth: []
+      summary: Автодополнение тегов
+      tags:
+      - tags
+  /api/v1/users/create:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт учётную запись пользователя по email и паролю.
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/restusers.UsersCreateReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Пользователь создан
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "409":
+          description: Уже существует
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      summary: Регистрация пользователя
+      tags:
+      - users
+  /api/v1/users/login:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет email/пароль, возвращает JWT-токен и устанавливает HttpOnly
+        cookie.
+      parameters:
+      - description: Учётные данные
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/restusers.UserLoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен авторизации
+          schema:
+            $ref: '#/definitions/restusers.UserLoginResp'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "401":
+          description: Неверные учётные данные
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+        "500":
+          description: Внутренняя ошибка
+          schema:
+            $ref: '#/definitions/restapi.ErrorResp'
+      summary: Вход в систему
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

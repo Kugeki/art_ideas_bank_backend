@@ -28,3 +28,6 @@ install-swag:
 generate-swagger:
 	swag fmt -d internal/ports/restapi
 	swag init -d internal/ports/restapi -g restapi.go
+
+setup-env:
+	./scripts/setup-env.sh
